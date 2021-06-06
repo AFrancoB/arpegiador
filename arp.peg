@@ -1,0 +1,97 @@
+##JSolang arp
+
+{
+  function addPitches(x,y) {
+    var z = [];
+    for(var a=0;a<x.length;a++) {
+      for(var b=0;b<y.length;b++) {
+        z.push(x[a] + y[b]);
+      }
+    }
+    return z;
+  }
+
+  function simpleDuration(x) {
+  var z = [];
+  for(var i=0;i<x.length;i++) {
+  if(x[i]==0) {z.push(0)}
+  
+  z.push(1/x[i])
+  
+  }
+  return z
+  }
+
+  function subtractPitches(x,y) {
+    var z = [];
+    for(var a=0;a<x.length;a++) {
+      for(var b=0;b<y.length;b++) {
+        z.push(x[a] - y[b]);
+      }
+    }
+    return z;
+  }
+
+  function showArray(x) { return "[" + x.join(",") + "]"; }
+
+  function showPitches(x) {
+    // do something here
+    return showArray(x);
+  }
+
+
+  function punctualProgram(n,d) {
+    if(n.length == 0) {
+      return "0 >> audio <> 5;"
+    }
+    return "arp << (step " + showPitches(n) + " (lfsaw "+ showPitches(d) + "));\n" 
+     +
+	 "saw (midicps $ arp) *(-25)db >> audio <> 2"
+  }
+}
+
+main = whitespace p:arpExpression { return "##punctual\n" + p; }
+
+arpExpression 
+  = "notes:" whitespace n:pitchExpression "dur:" whitespace d:durationExpression 
+  { return punctualProgram(n,simpleDuration(d)); }
+
+
+durationExpression
+  = simpleDur
+ 
+simpleDur = x:float { return [x]} / floatArray
+
+pitchExpression =
+  x:simplePitches "+" whitespace y:pitchExpression { return addPitches(x,y); }
+  / whitespace x:simplePitches "-" whitespace y:pitchExpression { return subtractPitches(x,y); }
+  / simplePitches 
+
+simplePitches = x:float { return [x] } / floatArray
+
+floatArray =
+  "[" whitespace "]" whitespace { return []; }
+  / "[" xs:buildFloatArray "]" whitespace { return xs; }
+
+buildFloatArray =
+  left:float "," right:buildFloatArray { var x = right; x.unshift(left); return x; }
+  / x:float { return [x] }
+
+float = whitespace x:(float1 / float2 / float3) whitespace { return x; }
+
+float1 = minus:"-"? leftDigits:[0-9]+ "." rightDigits:[0-9]* {
+  if(minus=="-")minus=-1; else minus=1;
+  return parseFloat(leftDigits.join("")+"."+rightDigits.join(""),10)*minus;
+}
+
+float2 = minus:"-"? leftDigits:[0-9]* "." rightDigits:[0-9]+ {
+  if(minus=="-")minus=-1; else minus=1;
+  return parseFloat(leftDigits.join("")+"."+rightDigits.join(""),10)*minus;
+}
+
+float3 = minus:"-"? digits:[0-9]+ {
+  if(minus=="-")minus=-1; else minus=1;
+  return parseFloat(digits.join(""),10)*minus;
+}
+
+whitespace = (" " / "\n" / "\r" / "\t")*
