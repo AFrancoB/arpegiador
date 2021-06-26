@@ -22,6 +22,17 @@
   return z
   }
 
+  function simpleVolume(x) {
+  var z = [];
+  for(var i=0;i<x.length;i++) {
+  if(x[i]==0) {z.push(0)}
+  
+  z.push(x[i])
+  
+  }
+  return z
+  }
+
   function subtractPitches(x,y) {
     var z = [];
     for(var a=0;a<x.length;a++) {
@@ -40,22 +51,28 @@
   }
 
 
-  function punctualProgram(n,d) {
+  function punctualProgram(n,d,v) {
     if(n.length == 0) {
       return "0 >> audio <> 5;"
     }
     return "arp << (step " + showPitches(n) + " (lfsaw "+ showPitches(d) + "));\n" 
      +
-	 "saw (midicps $ arp) *(-25)db >> audio <> 2"
+	 "vol << (" + showPitches(v) + "db);"
   }
 }
 
-main = whitespace p:arpExpression { return "##punctual\n" + p; }
+//  ---- 
+   main = whitespace p:allRules* { return "##punctual\n" + p.join(""); }
+allRules = arpExpression / anyCharacter
+anyCharacter = .
 
 arpExpression 
-  = "notes:" whitespace n:pitchExpression "dur:" whitespace d:durationExpression 
-  { return punctualProgram(n,simpleDuration(d)); }
+  = "notes:" whitespace n:pitchExpression "dur:" whitespace d:durationExpression "*" whitespace v:volumeExpression
+  { return punctualProgram(n,simpleDuration(d), simpleVolume(v)); }
 
+volumeExpression = simpleVol
+
+simpleVol = x:float { return [x]} / floatArray
 
 durationExpression
   = simpleDur
